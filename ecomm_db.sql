@@ -5799,11 +5799,16 @@ having avg(Tenure) =10 and sum(OrderCount)  >500;
 
 #16.Categorize customers based on their distance from the warehouse to home such as 'Very Close Distance' for distances <=5km, 'Close Distance' for <=10km, 'Moderate Distance' for <=15km, and 'Far Distance' for >15km. Then, display the churn status breakdown for each distance category.
 
-select WarehouseToHome from customer_churn  [DOUBT UND]
-WarehouseToHome <=5 ,'Very Close Distance'
-WarehouseToHome <= 10, 'Close Distance',
-WarehouseToHome <= 15, 'Moderate Distance', 'Far Distance')
-;
+SELECT 
+  CASE 
+    WHEN WarehouseToHome <=5 THEN 'Very Close Distance'
+    WHEN WarehouseToHome <=10 THEN 'Close Distance'
+    WHEN WarehouseToHome <=15 THEN 'Moderate Distance'
+    ELSE 'Far Distance'
+  END AS DistanceCategory,
+  ChurnStatus, COUNT(*) AS cnt
+FROM customer_churn GROUP BY DistanceCategory, ChurnStatus ORDER BY DistanceCategory;
+
 #17.List the customer’s order details who are married, live in City Tier-1, and their order counts are more than the average number of orders placed by all customers.
 
 select * from customer_churn
@@ -5811,7 +5816,24 @@ where MaritalStatus='Married' and  CityTier=1
 and OrderCount > (select avg(OrderCount) from customer_churn);
 
 #Create a ‘customer_returns’ table in the ‘ecomm’ database and insert the following data:
-
+use ecomm;
+CREATE TABLE customer_returns (
+  ReturnID INT PRIMARY KEY,
+  CustomerID INT,
+  ReturnDate DATE,
+  RefundAmount INT
+);
+INSERT INTO customer_returns VALUES
+(1001, 50022, '2023-01-01', 2130),
+(1002, 50316, '2023-01-23', 2000),
+(1003, 51099, '2023-02-14', 2290),
+(1004, 52321, '2023-03-08', 2510),
+(1005, 52928, '2023-03-20', 3000),
+(1006, 53749, '2023-04-17', 1740),
+(1007, 54206, '2023-04-21', 3250),
+(1008, 54838, '2023-04-30', 1990);
+use ecomm;
+drop table if exists customer_returns;
 CREATE TABLE customer_returns (
   ReturnID INT PRIMARY KEY,
   CustomerID INT,
@@ -5828,7 +5850,11 @@ INSERT INTO customer_returns VALUES
 (1007, 54206, '2023-04-21', 3250),
 (1008, 54838, '2023-04-30', 1990);
 
-
 select * from customer_churn;
 #b) Display the return details along with the customer details of those who have churned and have made complaints.
 
+select c.CustomerID,C.ChurnStatus,c.OrderCount,c.CityTier,
+r.ReturnID,r.ReturnDate,r.RefundAmount
+from customer_churn c
+inner join  customer_returns r on c.CustomerID =R.CustomerID
+WHERE ChurnStatus="Churned" AND c.ComplaintReceived="YES";
